@@ -1,0 +1,11 @@
+# Virtuelle Umgebungen
+venv/
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Sonstiger Müll
+.DS_Store
+*.log
