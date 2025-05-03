@@ -9,3 +9,4 @@ __pycache__/
 # Sonstiger Müll
 .DS_Store
 *.log
+*.txt

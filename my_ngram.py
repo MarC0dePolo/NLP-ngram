@@ -1,22 +1,27 @@
-import re
-from collections import defaultdict
-import os
-import random
-import numpy as np
-
 class ngram:
     def __init__(self, n : int, korpus : str, smoothing = False):
         self.korpus = korpus
         self.n = n
 
         # [["<s>", "bla", "blub", </s>], [...], [...], [...]]
-        self.text_normalized_noInterP_withSeg_asList = []
-        self.num_vocab = [[int, str]]
-        self.prepare()
+        self.toks = self._init_toks()
+        print("Korpus Verarbeitet")
 
-        self.table = np.zeros([len(self.num_vocab)] * n, dtype=int)
+        # [["bla", 100], ["blub",50], ["blib", 20], [...], [...]]
+        self.num_vocab = self._init_num_vocab()
+        print("Vokabular erstellt")
+
+        # Index Dict for Table
+        self.vocab_index = {key : idx for idx, (key, val) in enumerate(self.num_vocab)}
+
+        self.counts = self._count()
+
+        self.probs = self._normalize(smoothing)
         
-    def prepare(self):
+
+
+
+    def _init_toks(self):
         # Alle Interpunktionszeichen außer \w \s ; . ? ! entfernen
         text_no_p = re.sub(r"[^\w\s;.?!]", "", self.korpus)
         # Leerzeichen vor jedem übrigen Punktionszeichen setzen
@@ -28,42 +33,64 @@ class ngram:
 
         text_no_p_ends = text_no_p_ends.lower()
 
-        self.text_normalized_noInterP_withSeg_asList = [s.split(" ") for s in text_no_p_ends.split("|||")]
+        text_no_p_ends_list = re.findall(r'\w+|<s>|</s>|[;.!?]', text_no_p_ends)
 
-        for sentence in self.text_normalized_noInterP_withSeg_asList:
-            for s in sentence.split(" "):
-                self.num_vocab[s] += 1
+        # Each sentence gets a whole list
+        toks = []
+        group = []
 
-        self.num_vocab = list([val, key] for key, val in self.num_vocab.items())
+        for tok in text_no_p_ends_list:
+            group.append(tok)
 
-        for i, (num, word) in enumerate(self.num_vocab):
-            if num == 1:
-                begin = i
-                break
+            if tok == "</s>":
+                toks.append(group)
+                group = []
 
-        start_end_indexes = list(range(begin, len(self.num_vocab)))
+        return toks
 
-        choosen = []
+    def _init_num_vocab(self):
+        num_vocab = defaultdict(int)
+        for sentence in self.toks:
+            for w in sentence:
+                num_vocab[w] += 1
 
-        for _ in range(10):
-            rand_idx = random.choice(start_end_indexes)
-            choosen.append(rand_idx)
-            start_end_indexes.remove(rand_idx)
+        num_vocab = list([key, val] for key, val in num_vocab.items())
+        num_vocab = list(sorted(num_vocab, key=lambda x : x[1], reverse=True))
 
-        for i in choosen:
-            self.num_vocab[i][1] = "<UNK>"
+        return num_vocab
 
 
-    def train(self):
+    def _count(self):
+        table = np.zeros([len(self.num_vocab)] * self.n, dtype=int)
+
+        for sentence in self.toks:
+            for idx in range(len(sentence)):
+                if idx + self.n > len(sentence):   # genug Tokens vorhanden?
+                    break
+
+                indices = [
+                    self.vocab_index[sentence[idx + j]]
+                    for j in range(self.n)
+                ]
+
+                # for i in indices:
+                #     print(f"{self.num_vocab[i][0]} ", end="")
+                
+                # print("+++")
+                
+                table[tuple(indices)] += 1           # N-gram hochzählen
         
-
-if __name__ == "__main__":
-    raw_text = ""
-
-    for txt in os.listdir("korpus"):
-        with open(f"korpus/{txt}", "r", encoding="utf-8") as f:
-            content = f.read()
+        return table
     
-        raw_text += content + " "
+    def _normalize(self, smoothing):
+        counts = self.counts.astype(float)
 
-    
+        if smoothing:
+            counts += 1
+            print("Smoothing angewendet")
+        
+        denoms = counts.sum(axis=-1, keepdims=True)
+
+        probs = counts / denoms
+        return probs
+
