@@ -1,7 +1,5 @@
 ### Installation
-```Clone this repo then
-pip install -r requirements.txt
-```
+just `pip install -r requirements.txt` inside cloned repo
 
 ### Hier eine kurzgefasste Anleitung, wie du die `ngram`-Klasse einsetzen kannst:
 
