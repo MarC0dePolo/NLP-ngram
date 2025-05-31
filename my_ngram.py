@@ -8,7 +8,7 @@ from collections import Counter, defaultdict
 from typing import List, Tuple
 import pickle
 
-# Helper functions to save/load class ass Model
+# Helper functions to save/load class as Model
 def save_model(model, filepath: str) -> None:
     with open(filepath, "wb") as f:
         pickle.dump(model, f)
