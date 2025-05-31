@@ -6,6 +6,28 @@ import numpy as np
 import math
 from collections import Counter, defaultdict
 from typing import List, Tuple
+import pickle
+
+# Helper functions to save/load class ass Model
+def save_model(model, filepath: str) -> None:
+    with open(filepath, "wb") as f:
+        pickle.dump(model, f)
+
+def load_model(filepath: str):
+    with open(filepath, "rb") as f:
+        model = pickle.load(f)
+    return model
+
+"""
+# Save Model
+model = ngram(n=2, korpus=raw_text)
+save_model(model, "bigram_model.pkl")
+
+# Load Model
+model_loaded = load_model("bigram_model.pkl")
+print(model_loaded.generate("das wetter", 10))
+"""
+
 
 class ngram:
     def __init__(self, n: int, korpus: str, smoothing: bool = False):
@@ -141,3 +163,36 @@ class ngram:
                 prob = num / denom
                 log_sum += -math.log(prob)
         return math.exp(log_sum / N)
+
+def save_model(model, filepath: str) -> None:
+    """
+    Speichert das gegebene ngram-Modell in eine Datei.
+
+    Input:
+        model    : ngram-Instanz
+        filepath : str (Pfad zur Datei, z.B. "model.pkl")
+    Output:
+        None (schreibt binär in filepath)
+    """
+    with open(filepath, "wb") as f:
+        pickle.dump(model, f)
+
+
+def load_model(filepath: str):
+    """
+    Lädt ein ngram-Modell aus einer Datei und gibt die Instanz zurück.
+
+    Input:
+        filepath : str (Pfad zur Datei, z.B. "model.pkl")
+    Output:
+        ngram-Instanz (vom gespeicherten Modell)
+    """
+    with open(filepath, "rb") as f:
+        model = pickle.load(f)
+    return model
+
+
+
+
+
+
